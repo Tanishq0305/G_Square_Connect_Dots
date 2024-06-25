@@ -45,8 +45,9 @@ bool isFirstTouch = true;
 uint32_t startColor = off;
 
 // Correct path
-int Right_Path[14][2] = {
-  { 6, 0 }, { 5, 0 }, { 4, 0 }, { 3, 0 }, { 2, 0 }, { 1, 0 },{ 0, 0 }
+int Right_Path[2][14][2] = {
+  {{ 6, 0 }, { 5, 0 }, { 4, 0 }, { 3, 0 }, { 2, 0 }, { 1, 0 },{ 0, 0 }},
+  {{ 6, 1 }, { 5, 1 }, { 4, 1 }, { 3, 1 }, { 2, 1 }, { 1, 1 },{ 0, 1 }}
 };
 int correctPathLength = 7;
 
@@ -167,12 +168,15 @@ bool comparePaths() {
   if (pathLength != correctPathLength) {
     return false;
   }
+  for(int k = 0; k<2;k++){
   for (int i = 0; i < correctPathLength; i++) {
-    if (path[i][0] != Right_Path[i][0] || path[i][1] != Right_Path[i][1]) {
+    if (path[i][0] != Right_Path[k][i][0] || path[i][0] != Right_Path[k][i][1]) {
       return false;
     }
   }
   return true;
+  }
+  //return true;
 }
 
 bool isInInitializeLevel1(int row, int col) {
