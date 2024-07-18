@@ -1,6 +1,7 @@
 // C program to print elements of Three-Dimensional Array
-
+#include "second.h"
 #include <stdio.h>
+
 int correctPathLength = 8;
 int x[3][7][2];
 int x1[3][7][2];
@@ -37,13 +38,13 @@ void main(void)
 	// 	}
 	// }
 
-    if(check(x,x1)==1){
-        printf("matched");
-    }else{
-        printf("Not matched");
-    }
+    // if(check(x,x1)==1){
+    //     printf("matched");
+    // }else{
+    //     printf("Not matched");
+    // }
     
-
+    check2(3);
 }
 
 
