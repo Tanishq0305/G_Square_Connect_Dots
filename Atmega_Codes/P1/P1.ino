@@ -27,7 +27,9 @@ void setup() {
   writeEnable();
 
   // Write "Hi" to address 0x0000
-  writeData(0x0000, "Hi", 2);
+  // writeData(0x0000, "Hi", 2);
+  writeByte(0x00000001, 'H');
+  writeByte(0x00000002, 'i');
 
   // Read and print the data back to verify
   char data[3];
@@ -56,14 +58,31 @@ void writeData(unsigned int address, const char *data, byte length) {
   SPI.transfer((address >> 8) & 0xFF); // Address MSB
   SPI.transfer(address & 0xFF);        // Address LSB
 
-  for (byte i = 0; i < length; i++) {
-    SPI.transfer(data[i]);
-  }
+  // for (byte i = 0; i < length; i++) {
+    SPI.transfer(data[0]);
+    SPI.transfer(data[0]);
+  // }
   digitalWrite(CS_PIN, HIGH);
 
   waitForWriteCompletion(); // Wait for the write operation to complete
 }
 
+void writeByte(unsigned int address, char data){
+  Serial.println("Writing byte...");
+   writeEnable();
+
+  digitalWrite(CS_PIN, LOW);
+  SPI.transfer(PROGRAM);
+  SPI.transfer((address >> 8) & 0xFF); // Address MSB
+  SPI.transfer(address & 0xFF);        // Address LSB
+  SPI.transfer(data);
+  // delay(100);
+  SPI.transfer(data);
+  digitalWrite(CS_PIN, HIGH);
+
+  waitForWriteCompletion(); // Wait for the write operation to complete
+   Serial.println("Writing byte completed");
+}
 void readData(unsigned int address, char *data, byte length) {
   digitalWrite(CS_PIN, LOW);
   SPI.transfer(READ);
