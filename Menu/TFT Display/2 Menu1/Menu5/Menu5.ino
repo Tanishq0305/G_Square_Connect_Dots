@@ -12,6 +12,9 @@
 #define BUTTON_DOWN  4
 #define BUTTON_SELECT 5
 #define BUTTON_BACK   6
+#define BUTTON_LEFT 1
+#define BUTTON_RIGHT 0
+
 
 // Create an instance of the display
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
@@ -28,8 +31,7 @@ int muteMenuItemsCount = sizeof(muteMenuItems) / sizeof(muteMenuItems[0]);
 
 const char* levels[] = {"Level 1", "Level 2", "Level 3", "Level 4", "Level 5", "Level 6", "Level 7", "Level 8", "Level 9"};
 int levelsCount = sizeof(levels) / sizeof(levels[0]);
-int currentLevel = 2; // The current level the user is on (0-based index)
-int completedLevels = 1; // Number of completed levels (0-based index)
+
 
 int selectedItem = 0;
 bool inSettingsMenu = false;
@@ -38,6 +40,10 @@ bool inMuteMenu = false;
 bool inMainMenu = true;
 bool isSoundOn = false;
 bool isSoundOff = true;
+
+int currentLevel = 2; // The current level the user is on (0-based index)
+int completedLevels = 1; // Number of completed levels (0-based index)
+int selectedLevel = currentLevel; // Start with the current level selected
 
 void setup() {
   // Initialize the display
@@ -51,6 +57,11 @@ void setup() {
   pinMode(BUTTON_SELECT, INPUT_PULLUP);
   pinMode(BUTTON_BACK, INPUT_PULLUP);
 
+    // Initialize analog pins
+  pinMode(BUTTON_LEFT, INPUT_PULLUP); // Initialize left button
+  pinMode(BUTTON_RIGHT, INPUT_PULLUP); // Initialize right button
+  
+
   // Fill the screen with black
   tft.fillScreen(ST77XX_BLACK);
 
@@ -60,97 +71,103 @@ void setup() {
 
 //---------------------------- Loop --------------------------------------------------// 
 void loop() {
-
-
- //-------------------------------------------UP Button Starts ------------------------------------------- //
-    if (digitalRead(BUTTON_UP) == LOW)
-  {
-      selectedItem--;
-      if(selectedItem < 0)
-      {
-        if(inSettingsMenu){
+  //------------------------------------------- UP Button Starts ------------------------------------------- //
+  if (digitalRead(BUTTON_UP) == LOW) {
+    selectedItem--;
+    if (selectedItem < 0) {
+      if (inSettingsMenu) {
         selectedItem = settingsMenuItemsCount - 1;
-        }else if (inMuteMenu){
-          selectedItem =  1;
-        }else if(inLevelsMenu){
-          inLevelsMenu = true;
-          displayLevelsMenu();
-        }
-        else{
-         inMainMenu = true;
-         inLevelsMenu = false;
-         inMuteMenu = false;
-         inSettingsMenu = false;
-         selectedItem = mainMenuItemsCount - 1;
-        }
-        
+      } else if (inMuteMenu) {
+        selectedItem = 1;
+      } else if (inLevelsMenu) {
+        inLevelsMenu = true;
+        displayLevelsMenu();
+      } else {
+        inMainMenu = true;
+        inLevelsMenu = false;
+        inMuteMenu = false;
+        inSettingsMenu = false;
+        selectedItem = mainMenuItemsCount - 1;
       }
+    }
     updateMenu();
     delay(200); // Debounce delay
-
   }
-  //-------------------------------------------UP Button Ends ------------------------------------------- //
+  //------------------------------------------- UP Button Ends ------------------------------------------- //
 
-  //-------------------------------------------Down Button Starts ------------------------------------------- //
-    if (digitalRead(BUTTON_DOWN) == LOW) {
+  //------------------------------------------- DOWN Button Starts ------------------------------------------- //
+  if (digitalRead(BUTTON_DOWN) == LOW) {
     selectedItem++;
-    // if (selectedItem >= (inSettingsMenu ? settingsMenuItemsCount  : mainMenuItemsCount)) {
-    //   selectedItem = 0;
-    // }
-    if(inSettingsMenu && selectedItem >= settingsMenuItemsCount ){
+    if (inSettingsMenu && selectedItem >= settingsMenuItemsCount) {
       selectedItem = 0;
-    }else if(inMainMenu && selectedItem >=  mainMenuItemsCount){
+    } else if (inMainMenu && selectedItem >= mainMenuItemsCount) {
       selectedItem = 0;
-    }else if(inMuteMenu && selectedItem >=  muteMenuItemsCount){
+    } else if (inMuteMenu && selectedItem >= muteMenuItemsCount) {
       selectedItem = 0;
     }
     updateMenu();
     delay(200); // Debounce delay
   }
-  //-------------------------------------------Down Button Ends ------------------------------------------- //
+  //------------------------------------------- DOWN Button Ends ------------------------------------------- //
 
-  //------------------------------------------- Select Button Starts ------------------------------------------- //
+  //------------------------------------------- LEFT Button Starts ------------------------------------------- //
+  if (digitalRead(BUTTON_LEFT) == LOW && inLevelsMenu) {
+    if (selectedLevel % 3 > 0) { // Check if not at leftmost column
+      selectedLevel--; // Move left
+      updateLevelsMenu();
+    }
+    delay(200); // Debounce delay
+  }
+  //------------------------------------------- LEFT Button Ends ------------------------------------------- //
+
+  //------------------------------------------- RIGHT Button Starts ------------------------------------------- //
+  if (digitalRead(BUTTON_RIGHT) == LOW && inLevelsMenu) {
+    if (selectedLevel % 3 < 2) { // Check if not at rightmost column
+      selectedLevel++; // Move right
+      updateLevelsMenu();
+    }
+    delay(200); // Debounce delay
+  }
+  //------------------------------------------- RIGHT Button Ends ------------------------------------------- //
+
+  //------------------------------------------- SELECT Button Starts ------------------------------------------- //
   if (digitalRead(BUTTON_SELECT) == LOW) {
-    if (!inSettingsMenu && !inLevelsMenu && !inMuteMenu  &&  inMainMenu &&  selectedItem == 1) {
+    if (!inSettingsMenu && !inLevelsMenu && !inMuteMenu && inMainMenu && selectedItem == 1) {
       inSettingsMenu = true;
       inMainMenu = false;
       selectedItem = 0;
       displaySettingsMenu();
-    } 
-    else if(!inSettingsMenu && !inLevelsMenu && !inMuteMenu && inMainMenu && selectedItem == 2){
+    } else if (!inSettingsMenu && !inLevelsMenu && !inMuteMenu && inMainMenu && selectedItem == 2) {
       inLevelsMenu = true;
       inMainMenu = false;
       selectedItem = 0;
       displayLevelsMenu();
-    }
-    else if(!inSettingsMenu && !inLevelsMenu && !inMuteMenu &&  inMainMenu && selectedItem == 3){
+    } else if (!inSettingsMenu && !inLevelsMenu && !inMuteMenu && inMainMenu && selectedItem == 3) {
       inMainMenu = false;
       selectedItem = 0;
       turnOffDisplay();
-    }
-    else if(inSettingsMenu && !inLevelsMenu && !inMuteMenu && !inMainMenu && selectedItem == 0){
+    } else if (inSettingsMenu && !inLevelsMenu && !inMuteMenu && !inMainMenu && selectedItem == 0) {
       inSettingsMenu = false;
       inMuteMenu = true;
       selectedItem = 0;
       displayMuteMenu();
-    }else if (!inSettingsMenu && !inLevelsMenu && inMuteMenu &&  !inMainMenu && selectedItem == 0){
+    } else if (!inSettingsMenu && !inLevelsMenu && inMuteMenu && !inMainMenu && selectedItem == 0) {
       inSettingsMenu = false;
       inMuteMenu = true;
       selectedItem = 0;
       sound_on();
-    }else if(!inSettingsMenu && !inLevelsMenu && inMuteMenu &&  !inMainMenu && selectedItem == 1){
+    } else if (!inSettingsMenu && !inLevelsMenu && inMuteMenu && !inMainMenu && selectedItem == 1) {
       inSettingsMenu = false;
       inMuteMenu = true;
       selectedItem = 0;
       sound_off();
     }
-  delay(200);
-    
-  } 
-  //------------------------------------------- Select Button Ends ------------------------------------------- //
+    delay(200);
+  }
+  //------------------------------------------- SELECT Button Ends ------------------------------------------- //
 
-  //------------------------------------------- Back Button Starts ------------------------------------------- //
-    if (digitalRead(BUTTON_BACK) == LOW) {
+  //------------------------------------------- BACK Button Starts ------------------------------------------- //
+  if (digitalRead(BUTTON_BACK) == LOW) {
     if (inSettingsMenu) {
       inSettingsMenu = false;
       inMainMenu = true;
@@ -161,7 +178,7 @@ void loop() {
       inMainMenu = true;
       selectedItem = 2; // Return to the "Levels" menu item in the main menu
       displayMainMenu();
-    }else if(inMuteMenu) {
+    } else if (inMuteMenu) {
       inMuteMenu = false;
       inSettingsMenu = true;
       selectedItem = 0;
@@ -169,8 +186,9 @@ void loop() {
     }
     delay(200); // Debounce delay
   }
-    //------------------------------------------- Back Button Ends ------------------------------------------- //
+  //------------------------------------------- BACK Button Ends ------------------------------------------- //
 }
+
 
 //---------------------------- Update Menu --------------------------------------------------// 
 void updateMenu() {
@@ -272,10 +290,7 @@ void turnOffDisplay() {
 }
 
 //---------------------------- Levels Menu --------------------------------------------------// 
-void displayLevelsMenu() {
-  // Set text size
-  tft.setTextSize(2);
-
+void updateLevelsMenu() {
   // Clear the previous menu
   tft.fillScreen(ST77XX_BLACK);
 
@@ -307,6 +322,11 @@ void displayLevelsMenu() {
     // Draw the border around the rectangle
     tft.drawRect(x, y, squareWidth, squareHeight, ST77XX_WHITE);
 
+    // Draw blue cursor around selected level
+    if (i == selectedLevel) {
+      tft.drawRect(x - 2, y - 2, squareWidth + 4, squareHeight + 4, ST77XX_BLUE);
+    }
+
     // Set the text color to white for better visibility
     tft.setTextColor(ST77XX_WHITE);
 
@@ -327,6 +347,7 @@ void displayLevelsMenu() {
   // Draw menu bar border
   tft.drawRect(5, 5, borderWidth, borderHeight, ST77XX_WHITE);
 }
+
 
 
 //---------------------------- Welcome Message --------------------------------------------------// 
@@ -366,6 +387,7 @@ void displayWelcomeMessage() {
   tft.fillScreen(ST77XX_BLACK);
 }
 
+//---------------------------- Mute Menu  --------------------------------------------------// 
 void displayMuteMenu() {
   // Set text size and color
   tft.setTextSize(2);
@@ -402,7 +424,7 @@ void displayMuteMenu() {
   // Draw menu bar border
   tft.drawRect(5, 5, tft.width() - 10, tft.height() - 10, ST77XX_WHITE);
 }
-
+//---------------------------- Sound ON and OFF  --------------------------------------------------// 
 void sound_on(){
   digitalWrite(2, HIGH);
 }
@@ -410,3 +432,8 @@ void sound_on(){
 void sound_off(){
   digitalWrite(2, LOW);
 }
+//---------------------------- Updated Levels Menu --------------------------------------------------// 
+void displayLevelsMenu() {
+  updateLevelsMenu();
+}
+
