@@ -22,6 +22,10 @@ Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 // Define menu items
 const char* mainMenuItems[] = {"Start Game", "Settings", "Levels", "Exit"};
 int mainMenuItemsCount = sizeof(mainMenuItems) / sizeof(mainMenuItems[0]);
+static int secondsRemaining = 10; // Start countdown from 10 seconds
+
+const char* PauseMenuItems[] = {"Continue", "Exit"};
+int PauseMenuItemsCount = sizeof(PauseMenuItems) / sizeof(PauseMenuItems[0]);
 
 const char* settingsMenuItems[] = {"Mute", "Brightness"};
 int settingsMenuItemsCount = sizeof(settingsMenuItems) / sizeof(settingsMenuItems[0]);
@@ -42,6 +46,7 @@ bool isSoundOn = false;
 bool isSoundOff = true;
 bool selectedlevelx = false;
 bool timecompleted = false;
+bool pause = false;
 
 int currentLevel = 5; // The current level the user is on (0-based index)
 int completedLevels = 4; // Number of completed levels (0-based index)
@@ -122,6 +127,8 @@ void loop() {
       if(selectedLevel < 0){
         selectedLevel = store;
       }
+    }else if(selectedlevelx && selectedItem >= PauseMenuItemsCount){
+      selectedItem = 0;
     }
     updateMenu();
     delay(200); // Debounce delay
@@ -179,16 +186,33 @@ void loop() {
       inMuteMenu = true;
       selectedItem = 1;
       sound_off();
-    }else if(!inSettingsMenu && inLevelsMenu && !inMuteMenu && !inMainMenu && selectedLevel == 0){
+    }else if(!inSettingsMenu && inLevelsMenu && !inMuteMenu && !inMainMenu && selectedLevel==0){
       inLevelsMenu = false;
       selectedlevelx = true;
       timecompleted = true;
+      selectedItem = 0;
       while(timecompleted){
         Level1();
         delay(1000);
+        if(digitalRead(BUTTON_BACK) == LOW)
+        {
+           pause = true;
+           ContinueExit();
+           delay(5000);
+           if(timecompleted == false){
+            break;
+           }
+           pause = false;
+        }
+      
       }
      timecompleted = false;
      levelCompleted();
+     secondsRemaining = 10; // Start countdown from 10 seconds
+    }else if(!inSettingsMenu && !inLevelsMenu && !inMuteMenu && pause && selectedLevel==1){
+       timecompleted = false;
+       secondsRemaining = 10; // Start countdown from 10 seconds
+       pause = false;
     }
     delay(200);
   }
@@ -230,7 +254,10 @@ void updateMenu() {
     displayLevelsMenu();
   } else if(inMuteMenu){
      displayMuteMenu();
-  }else{
+  }else if(pause){
+    ContinueExit();
+  }
+  else{
     displayMainMenu();
   }
 }
@@ -471,7 +498,6 @@ void displayLevelsMenu() {
 //---------------------------- Level 1 Start --------------------------------------------------// 
 void Level1(){
   tft.fillRect(0, 0, tft.width(), 20, ST77XX_BLACK); 
-  static int secondsRemaining = 10; // Start countdown from 10 seconds
   char timeString[9]; // Buffer to hold the time string in format HH:MM:SS
 
   // Clear the previous time display
@@ -505,7 +531,7 @@ void Level1(){
 }
 //---------------------------- Level 1 END --------------------------------------------------// 
 
-//---------------------------- Level Completed --------------------------------------------------// 
+//---------------------------- Message Level Completed --------------------------------------------------// 
 
 void levelCompleted(){
  tft.fillScreen(ST77XX_BLACK);
@@ -521,4 +547,51 @@ void levelCompleted(){
   tft.setCursor(10, 60); // Adjust the cursor position as needed
   tft.print(F("Completed!!!"));
 }
-//---------------------------- Level Completed --------------------------------------------------// 
+//---------------------------- Message Level Completed --------------------------------------------------// 
+
+//---------------------------- Number of Completed Levels Start --------------------------------------------------// 
+void completed()
+{
+  currentLevel = 5; // The current level the user is on (0-based index)
+  completedLevels = 4; // Number of completed levels (0-based index)
+  selectedLevel = currentLevel; // Start with the current level selected
+
+
+}
+//---------------------------- Number of Completed Levels End  --------------------------------------------------//
+void ContinueExit(){
+    // Set text size and color
+  tft.setTextSize(2);
+  tft.setTextColor(ST77XX_WHITE);
+
+  // Clear the previous menu
+  tft.fillScreen(ST77XX_BLACK);
+
+  // Calculate the spacing and starting y position
+  int menuItemHeight = 20; // Height of each menu item
+  int spacing = 10; // Space between menu items
+  int totalHeight = PauseMenuItemsCount * (menuItemHeight + spacing) - spacing; // Total height of the menu
+  int startY = (tft.height() - totalHeight) / 2; // Center the menu vertically
+
+  // Display each menu item
+  for (int i = 0; i < PauseMenuItemsCount; i++) {
+    int16_t x1, y1;
+    uint16_t w, h;
+    tft.getTextBounds(PauseMenuItems[i], 0, 0, &x1, &y1, &w, &h); // Calculate the width of the text
+    int x = (tft.width() - w) / 2; // Center the text horizontally
+    int y = startY + i * (menuItemHeight + spacing); // Calculate the y position
+    tft.setCursor(x, y);
+
+    // Highlight the selected item
+    if (i == selectedItem) {
+      tft.setTextColor(ST77XX_RED); // Change color to red for the selected item
+      tft.print(PauseMenuItems[i]);
+      tft.setTextColor(ST77XX_WHITE); // Change back to white for other items
+    } else {
+      tft.print(PauseMenuItems[i]);
+    }
+  }
+
+  // Draw menu bar border
+  tft.drawRect(5, 5, tft.width() - 10, tft.height() - 10, ST77XX_WHITE);
+}
