@@ -40,9 +40,11 @@ bool inMuteMenu = false;
 bool inMainMenu = true;
 bool isSoundOn = false;
 bool isSoundOff = true;
+bool selectedlevelx = false;
+bool timecompleted = false;
 
-int currentLevel = 2; // The current level the user is on (0-based index)
-int completedLevels = 1; // Number of completed levels (0-based index)
+int currentLevel = 5; // The current level the user is on (0-based index)
+int completedLevels = 4; // Number of completed levels (0-based index)
 int selectedLevel = currentLevel; // Start with the current level selected
 
 void setup() {
@@ -79,10 +81,19 @@ void loop() {
         selectedItem = settingsMenuItemsCount - 1;
       } else if (inMuteMenu) {
         selectedItem = 1;
-      } else if (inLevelsMenu) {
-        inLevelsMenu = true;
-        displayLevelsMenu();
-      } else {
+      } 
+      // else if (inLevelsMenu) {
+      //   inLevelsMenu = true;
+      //   displayLevelsMenu();
+      // } 
+      else if(inLevelsMenu){
+      byte store;
+      store = selectedLevel;
+      selectedLevel = selectedLevel-3;
+      if(selectedLevel < 0){
+        selectedLevel = store;
+      }
+      }else {
         inMainMenu = true;
         inLevelsMenu = false;
         inMuteMenu = false;
@@ -104,6 +115,13 @@ void loop() {
       selectedItem = 0;
     } else if (inMuteMenu && selectedItem >= muteMenuItemsCount) {
       selectedItem = 0;
+    }else if(inLevelsMenu){
+      byte store;
+      store = selectedLevel;
+      selectedLevel = selectedLevel+3;
+      if(selectedLevel < 0){
+        selectedLevel = store;
+      }
     }
     updateMenu();
     delay(200); // Debounce delay
@@ -159,8 +177,18 @@ void loop() {
     } else if (!inSettingsMenu && !inLevelsMenu && inMuteMenu && !inMainMenu && selectedItem == 1) {
       inSettingsMenu = false;
       inMuteMenu = true;
-      selectedItem = 0;
+      selectedItem = 1;
       sound_off();
+    }else if(!inSettingsMenu && inLevelsMenu && !inMuteMenu && !inMainMenu && selectedLevel == 0){
+      inLevelsMenu = false;
+      selectedlevelx = true;
+      timecompleted = true;
+      while(timecompleted){
+        Level1();
+        delay(1000);
+      }
+     timecompleted = false;
+     levelCompleted();
     }
     delay(200);
   }
@@ -183,6 +211,10 @@ void loop() {
       inSettingsMenu = true;
       selectedItem = 0;
       displaySettingsMenu();
+    }else if(selectedlevelx){
+      selectedlevelx = false;
+      inLevelsMenu = true;
+      displayLevelsMenu();
     }
     delay(200); // Debounce delay
   }
@@ -361,25 +393,25 @@ void displayWelcomeMessage() {
 
   // Display "Welcome to Dot Knot"
   tft.setCursor(10, 30); // Adjust the cursor position as needed
-  tft.print("Welcome to");
+  tft.print(F("Welcome to"));
 
   tft.setCursor(10, 60); // Adjust the cursor position as needed
-  tft.print("Dot Knot");
+  tft.print(F("Dot Knot"));
 
   // Display "By Toyo India"
   tft.setCursor(10, 100); // Adjust the cursor position as needed
   tft.setTextSize(1); // Smaller text size for the subtitle
   tft.setTextColor(ST77XX_YELLOW);
-  tft.print("By ");
+  tft.print(F("By "));
 
   tft.setTextColor(ST77XX_BLUE);
-  tft.print("Toy");
+  tft.print(F("Toy"));
  
   tft.setTextColor(ST77XX_RED);
-  tft.print("oz ");
+  tft.print(F("oz "));
 
   tft.setTextColor(ST77XX_YELLOW);
-  tft.print("India");
+  tft.print(F("India"));
     // Wait for 3 seconds
   delay(3000);
 
@@ -436,4 +468,57 @@ void sound_off(){
 void displayLevelsMenu() {
   updateLevelsMenu();
 }
+//---------------------------- Level 1 Start --------------------------------------------------// 
+void Level1(){
+  tft.fillRect(0, 0, tft.width(), 20, ST77XX_BLACK); 
+  static int secondsRemaining = 10; // Start countdown from 10 seconds
+  char timeString[9]; // Buffer to hold the time string in format HH:MM:SS
 
+  // Clear the previous time display
+  tft.fillScreen(ST77XX_BLACK); // Clear the area for the time display
+
+  // Display "Time" text
+  tft.setTextSize(1);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setCursor(0, 0);
+  tft.print(F("Level 1"));
+
+  // Convert secondsRemaining to HH:MM:SS format
+  int hours = secondsRemaining / 3600;
+  int minutes = (secondsRemaining % 3600) / 60;
+  int seconds = secondsRemaining % 60;
+
+  snprintf(timeString, sizeof(timeString), "%02d:%02d:%02d", hours, minutes, seconds);
+
+  // Display the time
+  tft.setTextSize(2);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setCursor(0, 20); // Adjust the cursor position to fit your screen
+  tft.print(timeString);
+
+  // Decrement the secondsRemaining
+  if (secondsRemaining > 0) {
+    secondsRemaining--;
+  }else if(secondsRemaining == 0){
+    timecompleted = false;
+  }
+}
+//---------------------------- Level 1 END --------------------------------------------------// 
+
+//---------------------------- Level Completed --------------------------------------------------// 
+
+void levelCompleted(){
+ tft.fillScreen(ST77XX_BLACK);
+
+  // Set text color and size
+  tft.setTextColor(ST77XX_BLUE);
+  tft.setTextSize(2);
+
+ 
+  tft.setCursor(10, 30); // Adjust the cursor position as needed
+  tft.print(F("Level 1"));
+
+  tft.setCursor(10, 60); // Adjust the cursor position as needed
+  tft.print(F("Completed!!!"));
+}
+//---------------------------- Level Completed --------------------------------------------------// 
