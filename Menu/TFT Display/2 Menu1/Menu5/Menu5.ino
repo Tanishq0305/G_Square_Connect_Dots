@@ -48,8 +48,8 @@ bool selectedlevelx = false;
 bool timecompleted = false;
 bool pause = false;
 
-int currentLevel = 5; // The current level the user is on (0-based index)
-int completedLevels = 4; // Number of completed levels (0-based index)
+int currentLevel = 7; // The current level the user is on (0-based index)
+int completedLevels = 6; // Number of completed levels (0-based index)
 int selectedLevel = currentLevel; // Start with the current level selected
 
 void setup() {
@@ -76,11 +76,8 @@ void setup() {
   displayMainMenu();
 }
 
-//---------------------------- Loop --------------------------------------------------// 
-void loop() {
-  //------------------------------------------- UP Button Starts ------------------------------------------- //
-  if (digitalRead(BUTTON_UP) == LOW) {
-    selectedItem--;
+void handleUp(){
+      selectedItem--;
     if (selectedItem < 0) {
       if (inSettingsMenu) {
         selectedItem = settingsMenuItemsCount - 1;
@@ -108,12 +105,10 @@ void loop() {
     }
     updateMenu();
     delay(200); // Debounce delay
-  }
-  //------------------------------------------- UP Button Ends ------------------------------------------- //
+}
 
-  //------------------------------------------- DOWN Button Starts ------------------------------------------- //
-  if (digitalRead(BUTTON_DOWN) == LOW) {
-    selectedItem++;
+void handleDown(){
+      selectedItem++;
     if (inSettingsMenu && selectedItem >= settingsMenuItemsCount) {
       selectedItem = 0;
     } else if (inMainMenu && selectedItem >= mainMenuItemsCount) {
@@ -132,6 +127,16 @@ void loop() {
     }
     updateMenu();
     delay(200); // Debounce delay
+}
+//---------------------------- Loop --------------------------------------------------// 
+void loop() {
+
+  if (digitalRead(BUTTON_UP) == LOW) {
+    handleUp();
+  }
+
+  if (digitalRead(BUTTON_DOWN) == LOW) {
+    handleDown();
   }
   //------------------------------------------- DOWN Button Ends ------------------------------------------- //
 
@@ -552,11 +557,9 @@ void levelCompleted(){
 //---------------------------- Number of Completed Levels Start --------------------------------------------------// 
 void completed()
 {
-  currentLevel = 5; // The current level the user is on (0-based index)
-  completedLevels = 4; // Number of completed levels (0-based index)
+  currentLevel = 7; // The current level the user is on (0-based index)
+  completedLevels = 6; // Number of completed levels (0-based index)
   selectedLevel = currentLevel; // Start with the current level selected
-
-
 }
 //---------------------------- Number of Completed Levels End  --------------------------------------------------//
 void ContinueExit(){
