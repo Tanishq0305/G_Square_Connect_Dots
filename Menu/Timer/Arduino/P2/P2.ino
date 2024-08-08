@@ -1,3 +1,4 @@
+//Working Code for Checking 5 Second Time from 555 IC externally
 const int inputPin = 2;  
 const int targetCount = 5;  
 int highCount = 0;  
